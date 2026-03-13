@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bonus Scheme vs Profit Sharing Calculator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'DM Sans',sans-serif;background:#0c0f1a;color:#e2e4ea;min-height:100vh;padding:32px 24px}
+  .container{max-width:1100px;margin:0 auto}
+  h1{font-size:28px;font-weight:700;letter-spacing:-0.5px;margin-bottom:6px;color:#fff}
+  .subtitle{font-size:14px;color:#6b7194;margin-bottom:28px}
+  .section{background:#151929;border:1px solid #252a40;border-radius:14px;padding:24px;margin-bottom:24px}
+  .section h2{font-size:16px;font-weight:600;color:#fff;margin-bottom:14px}
+  .formula-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media(max-width:750px){.formula-grid{grid-template-columns:1fr}}
+  .formula-box{background:#0c0f1a;border:1px solid #252a40;border-radius:10px;padding:18px}
+  .formula-box h3{font-size:13px;color:#8b90b0;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px}
+  .formula-box .step{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#c5c9e0;line-height:2}
+  .formula-box .step .hl{color:#fbbf24;font-weight:500}
+  .formula-box .step .val{color:#34d399}
+  .note-box{background:#0f1520;border:1px solid #252a40;border-radius:10px;padding:16px;margin-top:16px;font-size:13px;color:#8b90b0;line-height:1.7}
+  .note-box strong{color:#c5c9e0}
+  .controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:20px}
+  @media(max-width:800px){.controls{grid-template-columns:1fr}}
+  .control-group{background:#151929;border:1px solid #252a40;border-radius:14px;padding:20px 24px}
+  .control-label{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+  .control-label span{font-size:13px;font-weight:500;color:#8b90b0;text-transform:uppercase;letter-spacing:0.8px}
+  .control-value{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:500;color:#fff}
+  input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:3px;background:#252a40;outline:none;cursor:pointer}
+  input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;background:#6366f1;border:3px solid #0c0f1a;box-shadow:0 0 0 2px #6366f1;cursor:pointer;transition:transform 0.15s}
+  input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.2)}
+  input[type="range"]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#6366f1;border:3px solid #0c0f1a;box-shadow:0 0 0 2px #6366f1;cursor:pointer}
+  #profitability::-webkit-slider-thumb{background:#fbbf24;box-shadow:0 0 0 2px #fbbf24}
+  #profitability::-moz-range-thumb{background:#fbbf24;box-shadow:0 0 0 2px #fbbf24}
+  .slider-endpoints{display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:#4a4f6e;font-family:'JetBrains Mono',monospace}
+  .prof-wrap{margin-bottom:28px}
+  .prof-wrap .control-group{border-color:#3a3520;background:linear-gradient(135deg,#151929 0%,#1a1a10 100%)}
+  .derived-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+  @media(max-width:700px){.derived-metrics{grid-template-columns:repeat(2,1fr)}}
+  .metric-card{background:#151929;border:1px solid #252a40;border-radius:12px;padding:16px 18px;text-align:center}
+  .metric-card .ml{font-size:11px;color:#6b7194;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px}
+  .metric-card .mv{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:600;color:#fff}
+  .green{color:#34d399!important}.red{color:#f87171!important}.yellow{color:#fbbf24!important}
+  .highlight-row{background:#1a1f35;border:1px solid #353a55;border-radius:14px;padding:18px 24px;margin-bottom:24px;display:flex;justify-content:center;gap:48px;flex-wrap:wrap}
+  .highlight-item{text-align:center}
+  .highlight-item .hl-label{font-size:11px;color:#6b7194;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:4px}
+  .highlight-item .hl-value{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:700}
+  .hl-bonus{color:#818cf8}.hl-ps{color:#34d399}
+  .chart-container{background:#151929;border:1px solid #252a40;border-radius:14px;padding:28px;margin-bottom:24px}
+  .chart-title{font-size:16px;font-weight:600;color:#fff;margin-bottom:4px}
+  .chart-subtitle{font-size:12px;color:#6b7194;margin-bottom:20px}
+  canvas{max-height:420px}
+  .appendix{opacity:0.85}
+  .appendix h2{color:#8b90b0;font-size:15px}
+  .divider{border:none;border-top:1px solid #252a40;margin:32px 0 24px}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Bonus Scheme vs Profit Sharing</h1>
+  <p class="subtitle">Interactive calculator - all amounts in GBP (£)</p>
+
+  <!-- SLIDERS -->
+  <div class="controls">
+    <div class="control-group">
+      <div class="control-label">
+        <span>Annual Gross Salary</span>
+        <div class="control-value" id="salaryValue">£60,000</div>
+      </div>
+      <input type="range" id="salary" min="20000" max="200000" step="5000" value="60000">
+      <div class="slider-endpoints"><span>£20k</span><span>£200k</span></div>
+    </div>
+    <div class="control-group">
+      <div class="control-label">
+        <span>Revenue</span>
+        <div class="control-value" id="revenueValue">£3,500,000</div>
+      </div>
+      <input type="range" id="revenue" min="1000000" max="10000000" step="50000" value="3500000">
+      <div class="slider-endpoints"><span>£1M</span><span>£10M</span></div>
+    </div>
+    <div class="control-group">
+      <div class="control-label">
+        <span>Team Size</span>
+        <div class="control-value" id="teamValue">20</div>
+      </div>
+      <input type="range" id="team" min="5" max="100" step="1" value="20">
+      <div class="slider-endpoints"><span>5</span><span>100</span></div>
+    </div>
+  </div>
+  <div class="prof-wrap">
+    <div class="control-group">
+      <div class="control-label">
+        <span>Profitability (Profit Margin)</span>
+        <div class="control-value" id="profitabilityValue" style="color:#fbbf24">15.0%</div>
+      </div>
+      <input type="range" id="profitability" min="0" max="55" step="0.5" value="15">
+      <div class="slider-endpoints"><span>0%</span><span>55%</span></div>
+    </div>
+  </div>
+
+  <!-- DERIVED METRICS -->
+  <div class="derived-metrics">
+    <div class="metric-card"><div class="ml">Costs (derived)</div><div class="mv" id="metricCosts">£2,975,000</div></div>
+    <div class="metric-card"><div class="ml">Profit</div><div class="mv" id="metricProfit">£525,000</div></div>
+    <div class="metric-card"><div class="ml">Bonus %</div><div class="mv" id="metricBonusPct">70%</div></div>
+    <div class="metric-card"><div class="ml">1 Month Salary</div><div class="mv" id="metricMonthly">£5,000</div></div>
+  </div>
+
+  <!-- PAYOUT HIGHLIGHT -->
+  <div class="highlight-row">
+    <div class="highlight-item"><div class="hl-label">Your Bonus Payout</div><div class="hl-value hl-bonus" id="hlBonus">£3,500</div></div>
+    <div class="highlight-item"><div class="hl-label">Your Profit Share Payout</div><div class="hl-value hl-ps" id="hlPS">£4,375</div></div>
+    <div class="highlight-item"><div class="hl-label">Difference (PS - Bonus)</div><div class="hl-value" id="hlDiff" style="color:#fbbf24">+£875</div></div>
+  </div>
+
+  <!-- LIVE CURVE CHART -->
+  <div class="chart-container">
+    <div class="chart-title">Bonus vs Profit Share - Live Curves</div>
+    <div class="chart-subtitle">Continuous payout curves across 0-55% profitability</div>
+    <canvas id="curveChart"></canvas>
+  </div>
+
+  <!-- BAR CHART -->
+  <div class="chart-container">
+    <div class="chart-title">Payout at Each Tier Step</div>
+    <div class="chart-subtitle">Side-by-side at the clean 5% profitability steps from the bonus table</div>
+    <canvas id="barChart"></canvas>
+  </div>
+
+  <!-- APPENDIX -->
+  <hr class="divider">
+  <div class="section appendix">
+    <h2>Appendix - How the Formulas Work</h2>
+    <div class="formula-grid">
+      <div class="formula-box">
+        <h3>Bonus Scheme</h3>
+        <div class="step">
+          <span class="hl">Payout</span> = Bonus % x (Annual Salary / 12)<br><br>
+          Where Bonus % is looked up from:<br>
+          0% margin -> 0% of month salary<br>
+          5% -> 20% | 10% -> 45% | 15% -> 70%<br>
+          20% -> 100% | 25% -> 120% | 30% -> 140%<br>
+          35% -> 160% | 40% -> 180% | 45% -> 200%<br>
+          50% -> 220%<br><br>
+          <span class="val">Scales with individual salary</span>
+        </div>
+      </div>
+      <div class="formula-box">
+        <h3>Profit Sharing</h3>
+        <div class="step">
+          <span class="hl">Payout</span> = (Margin - 10%) x Revenue / 2 / Team Size<br><br>
+          Only kicks in when profitability > 10%.<br>
+          Take the excess profit above the 10% margin,<br>
+          split 50/50 (company keeps half),<br>
+          divide the team's half equally.<br><br>
+          <span class="val">Same for everyone regardless of salary</span>
+        </div>
+      </div>
+    </div>
+    <div class="note-box">
+      <strong>Spreadsheet note:</strong> The spreadsheet uses <code style="color:#818cf8">10% x Revenue</code> for the retained amount (Row 9 references Row 2).
+      This is algebraically identical to "profit above the 10% margin" since: Profit - 10% x Revenue = Revenue x (Margin - 10%).
+    </div>
+  </div>
+</div>
+
+<script>
+const fmt = n => {
+  const neg = n < 0;
+  return (neg?'-':'') + '£' + Math.abs(Math.round(n)).toLocaleString('en-GB');
+};
+
+// Full bonus tier table (step function: "at least")
+const BONUS_TIERS = [
+  {p:0,m:0},{p:0.05,m:0.20},{p:0.10,m:0.45},{p:0.15,m:0.70},{p:0.20,m:1.00},
+  {p:0.25,m:1.20},{p:0.30,m:1.40},{p:0.35,m:1.60},{p:0.40,m:1.80},{p:0.45,m:2.00},{p:0.50,m:2.20},
+];
+const TIER_MARGINS = BONUS_TIERS.map(t=>t.p);
+const TIER_LABELS = ['0%','5%','10%','15%','20%','25%','30%','35%','40%','45%','50%'];
+
+function getBonusPct(margin) {
+  let result = 0;
+  for (const t of BONUS_TIERS) { if (margin >= t.p) result = t.m; }
+  return result;
+}
+function bonusPayout(margin, salary) { return getBonusPct(margin) * (salary / 12); }
+function profitSharePayout(margin, revenue, team) {
+  if (margin <= 0.10) return 0;
+  return ((margin - 0.10) * revenue / 2) / team;
+}
+
+const CF = {family:"'DM Sans',sans-serif"};
+const MF = {family:"'JetBrains Mono',monospace"};
+
+// Shared plugin: vertical marker line with dots
+function makeMarkerPlugin(canvasId, getXPosition) {
+  return {
+    id: 'marker_' + canvasId,
+    afterDraw(chart) {
+      if (chart.canvas.id !== canvasId) return;
+      const profPct = +document.getElementById('profitability').value;
+      const pos = getXPosition(chart, profPct);
+      if (pos === null) return;
+
+      const {x, bonusY, psY} = pos;
+      const yScale = chart.scales.y;
+      const c = chart.ctx;
+      c.save();
+
+      // Dashed vertical line
+      c.beginPath();
+      c.setLineDash([5,4]);
+      c.strokeStyle = '#fbbf2466';
+      c.lineWidth = 1.5;
+      c.moveTo(x, yScale.top);
+      c.lineTo(x, yScale.bottom);
+      c.stroke();
+      c.setLineDash([]);
+
+      // Bonus dot
+      if (bonusY !== null) {
+        c.beginPath(); c.arc(x, bonusY, 7, 0, Math.PI*2);
+        c.fillStyle='#818cf8'; c.fill();
+        c.strokeStyle='#0c0f1a'; c.lineWidth=2.5; c.stroke();
+      }
+      // PS dot
+      if (psY !== null) {
+        c.beginPath(); c.arc(x, psY, 7, 0, Math.PI*2);
+        c.fillStyle='#34d399'; c.fill();
+        c.strokeStyle='#0c0f1a'; c.lineWidth=2.5; c.stroke();
+      }
+      // Label
+      c.fillStyle='#fbbf24';
+      c.font="bold 11px 'DM Sans',sans-serif";
+      c.textAlign='center';
+      c.fillText(profPct.toFixed(1)+'%', x, yScale.top - 8);
+
+      c.restore();
+    }
+  };
+}
+
+// Curve chart marker: index directly maps to profitability %
+const curveMarker = makeMarkerPlugin('curveChart', (chart, profPct) => {
+  const idx = Math.round(profPct);
+  const m0 = chart.getDatasetMeta(0);
+  const m1 = chart.getDatasetMeta(1);
+  if (!m0.data[idx]) return null;
+  return { x: m0.data[idx].x, bonusY: m0.data[idx].y, psY: m1.data[idx].y };
+});
+
+// Bar chart marker: interpolate position between the 5%-step category bars
+const barMarker = makeMarkerPlugin('barChart', (chart, profPct) => {
+  const margin = profPct / 100;
+  const m0 = chart.getDatasetMeta(0);
+  const m1 = chart.getDatasetMeta(1);
+  if (!m0.data.length) return null;
+
+  // Find which two tier indices we're between
+  let tierIdx = 0;
+  for (let i = 0; i < TIER_MARGINS.length; i++) {
+    if (margin >= TIER_MARGINS[i]) tierIdx = i;
+  }
+
+  let x, bonusY, psY;
+  if (tierIdx >= TIER_MARGINS.length - 1 || margin >= TIER_MARGINS[TIER_MARGINS.length - 1]) {
+    // At or beyond last tier
+    const last = TIER_MARGINS.length - 1;
+    x = m0.data[last].x;
+    bonusY = m0.data[last].y;
+    psY = m1.data[last].y;
+  } else {
+    // Interpolate x position between tierIdx and tierIdx+1
+    const loP = TIER_MARGINS[tierIdx];
+    const hiP = TIER_MARGINS[tierIdx + 1];
+    const t = (hiP > loP) ? (margin - loP) / (hiP - loP) : 0;
+    const x0 = m0.data[tierIdx].x;
+    const x1 = m0.data[tierIdx + 1].x;
+    x = x0 + t * (x1 - x0);
+
+    // Y values: compute actual payouts at this margin
+    const salary = +document.getElementById('salary').value;
+    const revenue = +document.getElementById('revenue').value;
+    const team = +document.getElementById('team').value;
+    const yScale = chart.scales.y;
+    bonusY = yScale.getPixelForValue(bonusPayout(margin, salary));
+    psY = yScale.getPixelForValue(profitSharePayout(margin, revenue, team));
+  }
+
+  return { x, bonusY, psY };
+});
+
+Chart.register(curveMarker);
+Chart.register(barMarker);
+
+// CURVE CHART
+const curveChart = new Chart(document.getElementById('curveChart').getContext('2d'), {
+  type:'line',
+  data:{
+    labels:[],
+    datasets:[
+      {label:'Bonus Scheme',data:[],borderColor:'#818cf8',backgroundColor:'rgba(129,140,248,0.08)',borderWidth:2.5,fill:true,tension:0,pointRadius:0},
+      {label:'Profit Sharing',data:[],borderColor:'#34d399',backgroundColor:'rgba(52,211,153,0.08)',borderWidth:2.5,fill:true,tension:0.2,pointRadius:0},
+    ]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:true,
+    interaction:{intersect:false,mode:'index'},
+    plugins:{
+      legend:{position:'top',labels:{color:'#8b90b0',font:{...CF,size:13},padding:20,usePointStyle:true,pointStyle:'rectRounded'}},
+      tooltip:{backgroundColor:'#1e2236',titleColor:'#fff',bodyColor:'#c5c9e0',borderColor:'#353a55',borderWidth:1,padding:14,cornerRadius:10,
+        bodyFont:{...MF,size:13},
+        callbacks:{title:items=>'Profitability: '+items[0].label, label:ctx=>ctx.dataset.label+': £'+Math.round(ctx.parsed.y).toLocaleString()}}
+    },
+    scales:{
+      x:{title:{display:true,text:'Profitability (%)',color:'#6b7194',font:{...CF,size:13}},ticks:{color:'#6b7194',font:{...MF,size:11},maxTicksLimit:12},grid:{color:'#1e2236'}},
+      y:{title:{display:true,text:'Employee Payout (£)',color:'#6b7194',font:{...CF,size:13}},ticks:{color:'#6b7194',font:{...MF,size:12},callback:v=>'£'+v.toLocaleString()},grid:{color:'#1e2236'},beginAtZero:true}
+    }
+  }
+});
+
+// BAR CHART
+const barChart = new Chart(document.getElementById('barChart').getContext('2d'), {
+  type:'bar',
+  data:{
+    labels: TIER_LABELS,
+    datasets:[
+      {label:'Bonus Scheme',data:[],backgroundColor:'rgba(129,140,248,0.8)',borderColor:'#818cf8',borderWidth:1,borderRadius:5,barPercentage:0.6,categoryPercentage:0.55},
+      {label:'Profit Sharing',data:[],backgroundColor:'rgba(52,211,153,0.8)',borderColor:'#34d399',borderWidth:1,borderRadius:5,barPercentage:0.6,categoryPercentage:0.55}
+    ]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:true,
+    interaction:{intersect:false,mode:'index'},
+    plugins:{
+      legend:{position:'top',labels:{color:'#8b90b0',font:{...CF,size:13},padding:20,usePointStyle:true,pointStyle:'rectRounded'}},
+      tooltip:{backgroundColor:'#1e2236',titleColor:'#fff',bodyColor:'#c5c9e0',borderColor:'#353a55',borderWidth:1,padding:14,cornerRadius:10,
+        bodyFont:{...MF,size:13},callbacks:{label:ctx=>ctx.dataset.label+': £'+Math.round(ctx.parsed.y).toLocaleString()}}
+    },
+    scales:{
+      x:{title:{display:true,text:'Profit Margin',color:'#6b7194',font:{...CF,size:13}},ticks:{color:'#6b7194',font:{...MF,size:12}},grid:{color:'#1e2236'}},
+      y:{title:{display:true,text:'Employee Payout (£)',color:'#6b7194',font:{...CF,size:13}},ticks:{color:'#6b7194',font:{...MF,size:12},callback:v=>'£'+v.toLocaleString()},grid:{color:'#1e2236'},beginAtZero:true}
+    }
+  }
+});
+
+function update() {
+  const salary = +document.getElementById('salary').value;
+  const revenue = +document.getElementById('revenue').value;
+  const teamSize = +document.getElementById('team').value;
+  const profPct = +document.getElementById('profitability').value;
+  const margin = profPct / 100;
+  const monthly = salary / 12;
+  const costs = Math.round(revenue * (1 - margin));
+  const profit = revenue - costs;
+  const bPct = getBonusPct(margin);
+  const myBonus = Math.round(bonusPayout(margin, salary));
+  const myPS = Math.round(profitSharePayout(margin, revenue, teamSize));
+
+  document.getElementById('salaryValue').textContent = fmt(salary);
+  document.getElementById('revenueValue').textContent = fmt(revenue);
+  document.getElementById('teamValue').textContent = teamSize;
+  document.getElementById('profitabilityValue').textContent = profPct.toFixed(1) + '%';
+  document.getElementById('metricCosts').textContent = fmt(costs);
+  const pEl = document.getElementById('metricProfit');
+  pEl.textContent = fmt(profit);
+  pEl.className = 'mv ' + (profit > 0 ? 'green' : 'yellow');
+  document.getElementById('metricBonusPct').textContent = Math.round(bPct * 100) + '%';
+  document.getElementById('metricMonthly').textContent = fmt(Math.round(monthly));
+  document.getElementById('hlBonus').textContent = fmt(myBonus);
+  document.getElementById('hlPS').textContent = fmt(myPS);
+  const diff = myPS - myBonus;
+  const dEl = document.getElementById('hlDiff');
+  dEl.textContent = (diff >= 0 ? '+' : '') + fmt(diff);
+  dEl.style.color = diff > 0 ? '#34d399' : diff < 0 ? '#818cf8' : '#fbbf24';
+
+  // Curve chart
+  const labels = [];
+  const bonusCurve = [];
+  const psCurve = [];
+  for (let i = 0; i <= 55; i++) {
+    labels.push(i + '%');
+    bonusCurve.push(Math.round(bonusPayout(i/100, salary)));
+    psCurve.push(Math.round(profitSharePayout(i/100, revenue, teamSize)));
+  }
+  curveChart.data.labels = labels;
+  curveChart.data.datasets[0].data = bonusCurve;
+  curveChart.data.datasets[1].data = psCurve;
+  curveChart.update('none');
+
+  // Bar chart
+  barChart.data.datasets[0].data = TIER_MARGINS.map(m => Math.round(bonusPayout(m, salary)));
+  barChart.data.datasets[1].data = TIER_MARGINS.map(m => Math.round(profitSharePayout(m, revenue, teamSize)));
+  barChart.update('none');
+}
+
+document.querySelectorAll('input[type="range"]').forEach(el => el.addEventListener('input', update));
+update();
+</script>
+</body>
+</html>
